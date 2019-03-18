@@ -1,74 +1,80 @@
 #include <bits/stdc++.h>
-using namespace std;
+using std::vector;
+using std::pair;
+using std::swap;
+using std::initializer_list;
+using std::out_of_range;
 template<class KeyType, class ValueType, class Hash = std::hash<KeyType> > class HashMap {
-private:
+typedef pair<const KeyType, ValueType> mypair;
+ private:
     Hash Hasher;
-    vector<pair<KeyType,ValueType>> Data;
-    vector<bool> IsUsed;
-    vector<bool> Removed;
-    size_t Size;
-    size_t RealSize;
+    vector<pair<KeyType,ValueType>> data;
+    vector<bool> isUsed;
+    vector<bool> removed;
+    size_t length;
+    size_t realSize;
+    size_t threshold = 2;
     void ReHash() {
-        if (Size * 2 + 2 >= Data.size()) {
-            size_t n = Data.size() * 2 + 2;
-            vector<pair<KeyType,ValueType>> Data1(n);
-            vector<bool> IsUsed1(n);
-            for (size_t i = 0; i < Data.size(); ++i) {
-                if (IsUsed[i] && Removed[i] == 0) {
-                    size_t pos = Hasher(Data[i].first) % n;
-                    while (IsUsed1[pos]) {
+        if (length * threshold + threshold >= data.size()) {
+            size_t n = data.size() * threshold + threshold;
+            vector<pair<KeyType,ValueType>> buffer(n);
+            vector<bool> isUsed1(n);
+            for (size_t i = 0; i < data.size(); ++i) {
+                if (isUsed[i] && removed[i] == 0) {
+                    size_t pos = Hasher(data[i].first) % n;
+                    while (isUsed1[pos]) {
                         pos = (pos + 1) % n;
                     }
-                    Data1[pos] = Data[i];
-                    IsUsed1[pos] = 1;
+                    buffer[pos] = data[i];
+                    isUsed1[pos] = 1;
                 }
             }
-            Size = RealSize;
-            Removed.clear();
-            Removed.resize(n, false);
-            swap(Data1, Data);
-            swap(IsUsed1, IsUsed);
+            length = realSize;
+            removed.clear();
+            removed.resize(n, false);
+            swap(buffer, data);
+            swap(isUsed1, isUsed);
         }
     }
-    size_t myfind(const KeyType& x) const {
-        if (Data.size() == 0) {
-            return Data.size();
+    size_t myfind(const KeyType& key) const {
+        if (data.size() == 0) {
+            return data.size();
         }
         size_t counter = 0;
-        size_t pos = Hasher(x) % Data.size();
-        while (counter <= Data.size() + 1 && IsUsed[pos] == 1) {
-            if (Data[pos].first == x) {
-                if (!Removed[pos])
+        size_t pos = Hasher(key) % data.size();
+        while (counter <= data.size() + 1 && isUsed[pos] == 1) {
+            if (data[pos].first == key) {
+                if (!removed[pos])
                     return pos;
-                return Data.size();
+                return data.size();
             }
-            pos = (pos + 1) % Data.size();
+            pos = (pos + 1) % data.size();
             ++counter;
         }
-        if (IsUsed[pos] && Data[pos].first == x && Removed[pos] == 0)
+        if (isUsed[pos] && data[pos].first == key && removed[pos] == 0)
             return pos;
-        return Data.size();
+        return data.size();
     }
 public:
-    HashMap(Hash Hasher = Hash()): Hasher(Hasher), Size(0), RealSize(0) {};
+    HashMap(Hash Hasher = Hash()): Hasher(Hasher), length(0), realSize(0) {};
     void insert(const pair <KeyType,ValueType> &x) {
         ReHash();
-        size_t pos = Hasher(x.first) % Data.size();
-        while (IsUsed[pos]) {
-            if (Data[pos].first == x.first) {
-                if (Removed[pos]) {
-                    Removed[pos] = false;
-                    Data[pos].second = x.second;
-                    RealSize += 1;
+        size_t pos = Hasher(x.first) % data.size();
+        while (isUsed[pos]) {
+            if (data[pos].first == x.first) {
+                if (removed[pos]) {
+                    removed[pos] = false;
+                    data[pos].second = x.second;
+                    realSize += 1;
                 }
                 return;
             }
-            pos = (pos + 1) % Data.size();
+            pos = (pos + 1) % data.size();
         }
-        IsUsed[pos] = 1;
-        Data[pos] = x;
-        Size += 1;
-        RealSize += 1;
+        isUsed[pos] = 1;
+        data[pos] = x;
+        length += 1;
+        realSize += 1;
     }
     template <typename Iter> HashMap(Iter begin, Iter end, Hash Hasher = Hash()): HashMap(Hasher) {
         while (begin != end) {
@@ -85,28 +91,28 @@ public:
         }
     }
     size_t size() const {
-        return RealSize;
+        return realSize;
     }
     bool empty() const {
-        return (RealSize == 0);
+        return (realSize == 0);
     }
     Hash hash_function() const {
         return Hasher;
     }
     void erase(const KeyType &x) {
-        if (Data.size() == 0) {
+        if (data.size() == 0) {
             return;
         }
-        size_t pos = Hasher(x) % Data.size();
+        size_t pos = Hasher(x) % data.size();
         size_t counter = 0;
-        while (counter <= Data.size() + 1 && IsUsed[pos] == 1) {
-            if (Data[pos].first == x) break;
-            pos = (pos + 1) % Data.size();
+        while (counter <= data.size() + 1 && isUsed[pos] == 1) {
+            if (data[pos].first == x) break;
+            pos = (pos + 1) % data.size();
             counter++;
         }
-        if (IsUsed[pos] == 1 && !Removed[pos] && Data[pos].first == x) {
-            Removed[pos] = 1;
-            RealSize -= 1;
+        if (isUsed[pos] == 1 && !removed[pos] && data[pos].first == x) {
+            removed[pos] = 1;
+            realSize -= 1;
         }
     }
     class iterator {
@@ -118,13 +124,13 @@ public:
             if (ptr == nullptr) {
                 return;
             }
-            if (ind >= ptr->Data.size()) {
-                ind = ptr->Data.size();
+            if (ind >= ptr->data.size()) {
+                ind = ptr->data.size();
                 return;
             }
-            while(ptr->IsUsed[ind] == 0 || ptr->Removed[ind] == 1) {
+            while(ptr->isUsed[ind] == 0 || ptr->removed[ind] == 1) {
                 ind = ind + 1;
-                if (ind >= ptr->Data.size()) {
+                if (ind >= ptr->data.size()) {
                     return;
                 }
             }
@@ -145,11 +151,11 @@ public:
             forward();
             return tmp;
         }
-        pair<const KeyType, ValueType>& operator *() {
-            return reinterpret_cast<pair<const KeyType, ValueType>&>(ptr->Data[ind]);
+        mypair& operator *() {
+            return reinterpret_cast<mypair&>(ptr->data[ind]);
         }
-        pair<const KeyType, ValueType>* operator ->() {
-            return reinterpret_cast<pair<const KeyType, ValueType>*>(&ptr->Data[ind]);
+        mypair* operator ->() {
+            return reinterpret_cast<mypair*>(&ptr->data[ind]);
         }
         bool operator == (const iterator& other) const {
             return (other.ptr == ptr && other.ind == ind);
@@ -162,7 +168,7 @@ public:
         return iterator(*this, 0);
     }
     iterator end() {
-        return iterator(*this, Data.size());
+        return iterator(*this, data.size());
     }
     class const_iterator {
      friend class HashMap;
@@ -173,13 +179,13 @@ public:
             if (ptr == nullptr) {
                 return;
             }
-            if (ind >= ptr->Data.size()) {
-                ind = ptr->Data.size();
+            if (ind >= ptr->data.size()) {
+                ind = ptr->data.size();
                 return;
             }
-            while(ptr->IsUsed[ind] == 0 || ptr->Removed[ind] == 1) {
+            while(ptr->isUsed[ind] == 0 || ptr->removed[ind] == 1) {
                 ind = ind + 1;
-                if (ind >= ptr->Data.size()) {
+                if (ind >= ptr->data.size()) {
                     return;
                 }
             }
@@ -200,11 +206,11 @@ public:
             forward();
             return tmp;
         }
-        const pair<const KeyType, ValueType>& operator *() const {
-            return reinterpret_cast<const pair<const KeyType, ValueType>&>(ptr->Data[ind]);
+        const mypair& operator *() const {
+            return reinterpret_cast<const mypair&>(ptr->data[ind]);
         }
-        const pair<const KeyType, ValueType>* operator ->() const {
-            return reinterpret_cast<const pair<const KeyType, ValueType>*>(&ptr->Data[ind]);
+        const mypair* operator ->() const {
+            return reinterpret_cast<const mypair*>(&ptr->data[ind]);
         }
         bool operator == (const const_iterator& other) const {
             return (other.ptr == ptr && other.ind == ind);
@@ -217,11 +223,11 @@ public:
         return const_iterator(*this, 0);
     }
     const_iterator end() const {
-        return const_iterator(*this, Data.size());
+        return const_iterator(*this, data.size());
     }
     ValueType& operator [] (const KeyType& x) {
         insert({x, ValueType()});
-        return Data[myfind(x)].second;
+        return data[myfind(x)].second;
     }
     iterator find(const KeyType& x) {
         return iterator(*this, myfind(x));
@@ -233,13 +239,13 @@ public:
         if (find(x) == end()) {
             throw out_of_range("no");
         }
-        return Data[myfind(x)].second;
+        return data[myfind(x)].second;
     }
     void clear() {
-        Data.clear();
-        IsUsed.clear();
-        Removed.clear();
-        Size = 0;
-        RealSize = 0;
+        data.clear();
+        isUsed.clear();
+        removed.clear();
+        length = 0;
+        realSize = 0;
     }
 };
