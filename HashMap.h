@@ -13,27 +13,27 @@ typedef pair<const KeyType, ValueType> mypair;
     vector<bool> removed;
     size_t length;
     size_t realSize;
-    size_t threshold = 2;
+    size_t THRESHOLD = 2;
     void ReHash() {
-        if (length * threshold + threshold >= data.size()) {
-            size_t n = data.size() * threshold + threshold;
+        if (length * THRESHOLD + THRESHOLD >= data.size()) {
+            size_t n = data.size() * THRESHOLD + THRESHOLD;
             vector<pair<KeyType,ValueType>> buffer(n);
-            vector<bool> isUsed1(n);
+            vector<bool> isUsed_buffer(n);
             for (size_t i = 0; i < data.size(); ++i) {
                 if (isUsed[i] && removed[i] == 0) {
                     size_t pos = Hasher(data[i].first) % n;
-                    while (isUsed1[pos]) {
+                    while (isUsed_buffer[pos]) {
                         pos = (pos + 1) % n;
                     }
                     buffer[pos] = data[i];
-                    isUsed1[pos] = 1;
+                    isUsed_buffer[pos] = 1;
                 }
             }
             length = realSize;
             removed.clear();
             removed.resize(n, false);
             swap(buffer, data);
-            swap(isUsed1, isUsed);
+            swap(isUsed_buffer, isUsed);
         }
     }
     size_t myfind(const KeyType& key) const {
