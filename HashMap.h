@@ -13,7 +13,7 @@ typedef pair<const KeyType, ValueType> mypair;
     vector<bool> removed;
     size_t length;
     size_t realSize;
-    size_t THRESHOLD = 2;
+    static const size_t THRESHOLD = 2;
     void ReHash() {
         if (length * THRESHOLD + THRESHOLD >= data.size()) {
             size_t n = data.size() * THRESHOLD + THRESHOLD;
